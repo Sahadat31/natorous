@@ -28,6 +28,26 @@ app.post('/api/v1/tours', (req,res) => {
     })
 })
 
+app.patch('/api/v1/tours/:id', (req,res) => {
+    const {id} = req.params; 
+    res.status(200).json({
+        status: "Success",
+        data: {
+            tour: 'Updated'
+        }
+    })
+})
+
+app.delete('/api/v1/tours/:id', (req,res) => {
+    const {id} = req.params; 
+    res.status(200).json({
+        status: "Success",
+        data: {
+            tour: 'Deleted'
+        }
+    })
+})
+
 app.get('/api/v1/tours/:id', (req,res) => {
     const {id} = req.params;
     console.log(id)
