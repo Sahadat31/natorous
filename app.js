@@ -9,12 +9,6 @@ if (process.env.NODE_ENVIRONMENT==='development') {
 }
 app.use(express.json())
 app.use(express.static(`${__dirname}/public`))        // to send static files to client
-// app.get('/api/v1/tours', getAllTours)
-// app.get('/api/v1/tours/:id', getTour)
-// app.post('/api/v1/tours', createTour)
-// app.patch('/api/v1/tours/:id', updateTour)
-// app.delete('/api/v1/tours/:id', deleteTour)
-
 
 // mounting the routers
 app.use('/api/v1/tours',tourRouter)
