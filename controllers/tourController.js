@@ -25,13 +25,21 @@ const tours = JSON.parse(fs.readFileSync(`${__dirname}/../dev-data/data/tours-si
 //     next();
 // }
 
-const getAllTours = (req,res) => {
-    res.status(200).json({
-        status: "success",
-        data: {
-            tours
-        }
-    })
+const getAllTours = async (req,res) => {
+    try {
+        const tours = await Tour.find()
+        res.status(200).json({
+            status: "success",
+            data: {
+                tours
+            }
+        })
+    } catch (err) {
+        res.status(400).json({
+            status: 'Failure',
+            message: 'Cannot fetch tours!!'
+        })
+    }
 }
 const getTour = (req,res) => {
     const {id} = req.params;
