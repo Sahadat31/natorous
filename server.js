@@ -1,9 +1,9 @@
 const mongoose = require('mongoose')
 const dotenv = require('dotenv')
-const app = require('./app')
 dotenv.config({
     path: `.env.${process.env.NODE_ENV}`
   });       // will run based on NODE_ENV mentioned in package.json script
+const app = require('./app')
 const db = process.env.DATABASE_URL.replace('<db_password>',process.env.PASSWORD)
 
 mongoose.connect(db).then(()=>{
