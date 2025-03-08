@@ -6,7 +6,9 @@ const tourSchema = new Schema({
     type: String,
     required: [true, 'A tour should always have a name'],
     unique: true,
-    trim: true
+    trim: true,
+    minLength: [5,'A tour name must have at least 5 characters'],
+    maxLength: [40, 'A tour name must not have more than 40 characters']
   },
   duration: {
     type: Number,
@@ -18,7 +20,11 @@ const tourSchema = new Schema({
   },
   difficulty: {
     type: String,
-    required: [true, 'A tour must have a difficulty level']
+    required: [true, 'A tour must have a difficulty level'],
+    enum: {
+      values: ['easy','medium','difficult'],
+      message: 'Difficulty can either be easy,medium or hard'
+    }
   },
   ratingsQuantity: {
     type: Number,
@@ -26,7 +32,9 @@ const tourSchema = new Schema({
   },
   ratingsAverage: {
     type: Number,
-    default: 4
+    default: 4,
+    min: [1.0, 'Rating average should be more than or equal to 1'],
+    max: [5.0, 'Rating average can not be more than 5']
   },
   price: {
     type: Number,

@@ -14,5 +14,13 @@ app.use(express.static(`${__dirname}/public`))        // to send static files to
 app.use('/api/v1/tours',tourRouter)
 app.use('/api/v1/users',userRouter)
 
+// if till now no route handlers catches it then its an undefined route
+app.all('*',(req,res)=> {
+    res.status(404).json({
+        status: 'Failure',
+        message: `Can't find this route ${req.originalUrl} on this server!!!`
+    })
+})
+
 module.exports = app;
 
