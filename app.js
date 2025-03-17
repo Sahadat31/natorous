@@ -2,6 +2,8 @@ const express = require('express');
 const morgan = require('morgan');
 const tourRouter = require('./routes/tourRoutes')
 const userRouter = require('./routes/userRoutes')
+const AppError = require('./utils/appError');
+const globalErrorHandler = require('./controllers/errorController')
 const app = express();
 
 if (process.env.NODE_ENVIRONMENT==='development') {
@@ -15,12 +17,12 @@ app.use('/api/v1/tours',tourRouter)
 app.use('/api/v1/users',userRouter)
 
 // if till now no route handlers catches it then its an undefined route
-app.all('*',(req,res)=> {
-    res.status(404).json({
-        status: 'Failure',
-        message: `Can't find this route ${req.originalUrl} on this server!!!`
-    })
+app.all('*',(req,res,next)=> {
+    const err = new AppError(`Can't find this route ${req.originalUrl} on this server!!!`,404)
+    next(err);
 })
+// error handler route
+app.use(globalErrorHandler)
 
 module.exports = app;
 
