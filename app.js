@@ -19,7 +19,7 @@ app.use('/api/v1/users',userRouter)
 // if till now no route handlers catches it then its an undefined route
 app.all('*',(req,res,next)=> {
     const err = new AppError(`Can't find this route ${req.originalUrl} on this server!!!`,404)
-    next(err);
+    next(err);      // it will call the error handler middleware this way
 })
 // error handler route
 app.use(globalErrorHandler)
