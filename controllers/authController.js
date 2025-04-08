@@ -1,8 +1,16 @@
 const {promisify} = require('util');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModels');
 const AppError = require('../utils/appError');
+const email = require('../utils/email');
 
+
+const signToken = id=> {
+    return jwt.sign({id}, process.env.JWT_SECRET_KEY, {
+        expiresIn: process.env.JWT_EXPIRES_IN
+    })
+}
 const signup = async(req,res,next) => {
     try {
         const newUser = await User.create({
@@ -12,9 +20,7 @@ const signup = async(req,res,next) => {
             password:req.body.password,
             passwordChangedAt: req.body.passwordChangedAt
         })
-        const token = jwt.sign({id:newUser._id}, process.env.JWT_SECRET_KEY, {
-            expiresIn: process.env.JWT_EXPIRES_IN
-        })
+        const token = signToken(newUser._id)
         res.status(201).json({
             status: 'Success',
             token,
@@ -42,9 +48,7 @@ const login = async(req,res,next) => {
             return next(new AppError('Incorrect email or password', 401));
         }
         // if valid sign token and send
-        const token = jwt.sign({id:user._id}, process.env.JWT_SECRET_KEY, {
-            expiresIn: process.env.JWT_EXPIRES_IN
-        })
+        const token = signToken(user._id)
         res.status(200).json({
             status: 'Success',
             data: {
@@ -104,18 +108,67 @@ const forgotPassword = async(req,res,next)=> {
         // create reset token for the user
         const resetToken = user.createForgetPasswordToken()
         await user.save({validateBeforeSave: false})        // save encrypted resettoken and expiry time into db
-        next();
+        // now we will send a reset password link to user email
+        const resetTokenURL = `${req.protocol}://${req.get('host')}/api/v1/resetPassword/${resetToken}`;
+        // set email content
+        const emailContent = {
+            email: user.email,
+            message: `Forgot your password? Click on the link ${resetTokenURL} and reset your passoword!`,
+            subject: 'The url is only active for 10 minutes'
+        }
+        try{
+            await email(emailContent)   // send email
+    
+            res.status(200).json({
+                status: 'Success',
+                message: 'Token sent to email!'
+            });
+        }catch(err) {
+            user.passwordResetToken=undefined
+            user.passwordResetTokenExpiredAt=undefined
+            await user.save({validateBeforeSave: false})
+            return next(new AppError(`${err.message} Please try again later`,500))
+        }
 
     }catch(err) {
         return next(new AppError(err.message,409))
     }
 }
 // route handler for reset password
+const resetPassword = async(req,res,next) => {
+    try {
+        // Get user based on token
+        const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex')
+        const user = await User.findOne({
+            passwordResetToken: hashedToken,
+            passwordResetTokenExpiredAt: {$gt: Date.now()}
+        })
+        if (!user) {
+            return next(new AppError('Invalid token or token expired',400))
+        }
+        // reset resettoken update password
+        user.password = req.body.password;
+        user.passwordResetToken = undefined;
+        user.passwordResetTokenExpiredAt = undefined;
+        await user.save();
+        // login the user
+        const token = signToken(user._id)
+        res.status(200).json({
+            status: 'Success',
+            'message': 'Password reset successfully!',
+            token
+        })
+    }catch(err) {
+        return next(new AppError(err.message,409))
+    }
+
+}
 
 module.exports={
     signup,
     login,
     protectRoutes,
     restrict,
-    forgotPassword
+    forgotPassword,
+    resetPassword
 }

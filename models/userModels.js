@@ -26,8 +26,7 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: [true, 'Please provide your password!!'],
-        minLength: 0,
-        maxLength: 8,
+        minLength: 8,
         select: false // this will only hide password while find query is done, not while save/create
 
     },
@@ -43,9 +42,12 @@ const userSchema = new mongoose.Schema({
 })
 
 userSchema.pre('save', async function(next) {
-    if (!this.isModified('password')) next();
-    // encrypt password
-    this.password = await bcrypt.hash(this.password, 12)
+    if (!this.isModified('password')) return next();
+    
+    this.password = await bcrypt.hash(this.password, 12) // encrypt password
+    if (!this.isNew && this.isModified('password')) {
+        this.passwordChangedAt = Date.now() - 1000; // only update if password is changed and the document is not new
+    }
     next();
 })
 
@@ -63,7 +65,7 @@ userSchema.methods.changedPasswordAfter = function(JWTtimestamp) {
 
 userSchema.methods.createForgetPasswordToken= function() {
     const resetToken = crypto.randomBytes(32).toString('hex')
-    this.passwordResetToken = crypto.createHash('sh256').update(resetToken).digest('hex')
+    this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex')
     this.passwordResetTokenExpiredAt = Date.now() + 10*60*1000;  // 10 minutes till
     return resetToken;
 }
