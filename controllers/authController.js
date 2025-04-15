@@ -163,6 +163,31 @@ const resetPassword = async(req,res,next) => {
     }
 
 }
+// route handler for update password (not forget password/resetpassword)
+const updatePassword =async(req,res,next) => {
+    try {
+        // get user from collection
+        const user = await User.findById(req.user._id).select('+password')
+        // match the req body password with user password
+        if (!await user.comparePassword(String(req.body.currentPassword))) {
+            return next(new AppError('Password does not matched',404))
+        }
+        // if yes, update password
+        user.password = req.body.updatedPassword;
+        await user.save();
+    
+        // sign jwt token,login user
+        const token = await signToken(user._id);
+        res.status(200).json({
+            status: 'Sucess',
+            token,
+            message: 'Password changed successfully!'
+        })
+
+    } catch (err) {
+        return next(new AppError(err.message,409))
+    }
+}
 
 module.exports={
     signup,
@@ -170,5 +195,6 @@ module.exports={
     protectRoutes,
     restrict,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    updatePassword
 }
